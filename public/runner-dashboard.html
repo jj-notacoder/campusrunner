@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Runner Dashboard — CampusRunner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080808;--bg2:#0e0e0e;--bg3:#141414;--surface:#1a1a1a;
+  --accent:#00d4ff;--accent2:rgba(0,212,255,0.07);--accent3:rgba(0,212,255,0.15);
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#f0ede8;--text2:rgba(240,237,232,0.55);--text3:rgba(240,237,232,0.35);
+  --green:#22c55e;--red:#ff6b6b;--yellow:#f59e0b;
+  --sidebar:240px;--header:64px;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Instrument Sans',sans-serif;cursor:none;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.6}
+.cur{position:fixed;width:12px;height:12px;border-radius:50%;background:var(--accent);pointer-events:none;z-index:99999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:transform .1s,width .15s,height .15s}
+.cur-r{position:fixed;width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(0,212,255,.45);pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:all .18s cubic-bezier(.25,.46,.45,.94)}
+.layout{display:flex;height:100vh;position:relative;z-index:1}
+.sidebar{width:var(--sidebar);min-width:var(--sidebar);height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:50;transition:width .3s ease,min-width .3s ease;overflow:hidden}
+.sb-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sb-logo-text{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.08em;color:var(--accent);white-space:nowrap}
+.sb-logo-sub{font-size:.65rem;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-top:2px;white-space:nowrap}
+.sb-nav{flex:1;padding:16px 12px;overflow-y:auto;overflow-x:hidden}
+.sb-nav::-webkit-scrollbar{width:0}
+.sb-section{font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);padding:8px 8px 6px;margin-top:8px;white-space:nowrap}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;cursor:none;transition:all .2s;color:var(--text2);font-size:.88rem;font-weight:500;white-space:nowrap;position:relative;margin-bottom:2px;text-decoration:none}
+.nav-item:hover{background:rgba(255,255,255,0.04);color:var(--text)}
+.nav-item.active{background:var(--accent2);color:var(--accent);border-left:2px solid var(--accent);padding-left:10px}
+.nav-item .ico{font-size:1.1rem;min-width:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-label{white-space:nowrap}
+.sb-bottom{padding:12px;border-top:1px solid var(--border);flex-shrink:0}
+.sb-profile{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;margin-bottom:6px;cursor:none}
+.sb-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent2);border:1.5px solid var(--accent3);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:var(--accent);flex-shrink:0}
+.sb-user-info{overflow:hidden}
+.sb-user-name{font-size:.82rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-user-role{font-size:.68rem;color:var(--text3);white-space:nowrap}
+.sb-action{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:none;transition:all .2s;color:var(--text3);font-size:.82rem;font-weight:500;width:100%;background:none;border:none;text-align:left;white-space:nowrap}
+.sb-action:hover{background:rgba(255,255,255,0.04);color:var(--text)}
+.sb-action.logout:hover{color:var(--red);background:rgba(255,107,107,0.06)}
+.logout-confirm{background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.2);border-radius:10px;padding:10px 12px;margin-top:4px;display:none}
+.logout-confirm.show{display:block}
+.logout-confirm p{font-size:.75rem;color:var(--red);margin-bottom:8px}
+.logout-confirm-btns{display:flex;gap:6px}
+.logout-confirm-btns button{flex:1;padding:6px;border-radius:6px;font-size:.75rem;cursor:none;font-family:'Instrument Sans',sans-serif;font-weight:600;transition:all .2s;border:none}
+.btn-yes{background:var(--red);color:#fff}
+.btn-no{background:rgba(255,255,255,0.07);color:var(--text2)}
+.header{position:fixed;top:0;left:var(--sidebar);right:0;height:var(--header);background:rgba(8,8,8,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:40;transition:left .3s ease}
+.header-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.05em;color:var(--text)}
+.header-right{display:flex;align-items:center;gap:16px}
+.notif-btn{position:relative;background:none;border:none;cursor:none;color:var(--text2);transition:color .2s;padding:4px}
+.notif-btn:hover{color:var(--text)}
+.notif-dot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--accent);border:1.5px solid var(--bg)}
+.header-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent2);border:1.5px solid var(--accent3);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:var(--accent);cursor:none}
+.main{margin-left:var(--sidebar);margin-top:var(--header);height:calc(100vh - var(--header));overflow-y:auto;padding:32px;transition:margin-left .3s ease}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-track{background:transparent}
+.main::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}
+.panel{display:none}
+.panel.active{display:block}
+.welcome-banner{margin-bottom:32px}
+.welcome-eyebrow{font-family:'Bebas Neue',sans-serif;font-size:clamp(1rem,2vw,1.1rem);color:rgba(0,212,255,.6);letter-spacing:.1em;margin-bottom:4px}
+.welcome-name{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,5vw,4.5rem);color:var(--text);line-height:1;letter-spacing:.02em}
+.welcome-id{font-size:.9rem;color:rgba(0,212,255,.6);letter-spacing:.1em;margin-top:6px;font-weight:500}
+.welcome-row{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px}
+.welcome-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.greeting{font-size:1.1rem;color:var(--text2)}
+.greeting-date{font-size:.8rem;color:var(--text3)}
+.divider{height:1px;background:linear-gradient(90deg,var(--accent),rgba(0,212,255,.1),transparent);margin-bottom:32px;opacity:.4}
+
+/* STATUS TOGGLE */
+.status-toggle-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.toggle-row{display:flex;align-items:center;gap:10px}
+.toggle-label{font-size:.82rem;font-weight:600;color:var(--text2)}
+.toggle-switch{position:relative;width:54px;height:28px;cursor:none}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:rgba(255,255,255,.1);border-radius:100px;transition:all .3s;border:1px solid var(--border2)}
+.toggle-slider::before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;border-radius:50%;background:var(--text3);transition:all .3s}
+.toggle-switch input:checked+.toggle-slider{background:rgba(0,212,255,.15);border-color:rgba(0,212,255,.4);box-shadow:0 0 16px rgba(0,212,255,.2)}
+.toggle-switch input:checked+.toggle-slider::before{transform:translateX(26px);background:var(--accent)}
+.toggle-status-text{font-size:.75rem;color:var(--text3)}
+.toggle-status-text span{color:var(--accent)}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:18px;padding:24px;transition:all .25s ease;cursor:none;opacity:0;transform:translateY(16px)}
+.stat-card.visible{opacity:1;transform:translateY(0)}
+.stat-card:hover{border-color:rgba(0,212,255,.2);transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.stat-icon{font-size:1.6rem;margin-bottom:12px}
+.stat-value{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:.02em;color:var(--text);line-height:1;margin-bottom:4px}
+.stat-label{font-size:.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.stat-sub{font-size:.72rem;color:var(--text3);margin-top:6px}
+.stat-accent{color:var(--accent)}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:24px;transition:all .25s ease;opacity:0;transform:translateY(16px)}
+.card.visible{opacity:1;transform:translateY(0)}
+.card:hover{border-color:rgba(0,212,255,.15);box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:.05em;color:var(--text)}
+.card-link{font-size:.8rem;color:var(--accent);cursor:none;text-decoration:none;font-weight:500;transition:opacity .2s}
+.card-link:hover{opacity:.7}
+.card.accent-left{border-left:3px solid var(--accent)}
+
+/* ACTIVE DELIVERY */
+.delivery-content{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start}
+.delivery-info{display:flex;flex-direction:column;gap:12px}
+.delivery-row{display:flex;gap:10px;align-items:center}
+.delivery-ico{font-size:1rem;min-width:24px}
+.delivery-text{font-size:.88rem;color:var(--text2)}
+.delivery-text strong{color:var(--text)}
+.eta-badge{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);border-radius:100px;padding:6px 14px;font-size:.8rem;font-weight:600;color:var(--accent);white-space:nowrap}
+.delivery-actions{display:flex;flex-direction:column;gap:10px;min-width:160px}
+.btn-ghost{background:none;border:1.5px solid var(--border2);border-radius:100px;padding:10px 18px;color:var(--text2);font-family:'Instrument Sans',sans-serif;font-size:.83rem;font-weight:600;cursor:none;transition:all .2s}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-cyan{background:var(--accent);border:none;border-radius:100px;padding:11px 18px;color:#000;font-family:'Instrument Sans',sans-serif;font-size:.83rem;font-weight:700;cursor:none;transition:all .2s}
+.btn-cyan:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,212,255,.3)}
+.empty-delivery{text-align:center;padding:24px 0;color:var(--text3);font-size:.88rem;line-height:1.6}
+
+/* BAR CHART */
+.chart-bars{display:flex;align-items:flex-end;gap:8px;height:120px;margin:8px 0 16px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%}
+.bar{width:100%;border-radius:6px 6px 0 0;background:rgba(0,212,255,.25);transition:all .6s ease;min-height:4px}
+.bar.today{background:var(--accent);box-shadow:0 0 12px rgba(0,212,255,.35)}
+.bar-day{font-size:.68rem;color:var(--text3);font-weight:500;letter-spacing:.04em}
+.chart-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px}
+.mini-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.mini-val{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--accent);margin-bottom:3px}
+.mini-label{font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+
+/* ORDER TABLE */
+.order-table{width:100%;border-collapse:collapse}
+.order-table th{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding:0 0 12px;text-align:left;font-weight:600}
+.order-table td{padding:13px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.85rem;color:var(--text2);vertical-align:middle}
+.order-table tr:last-child td{border-bottom:none}
+.order-table tr:hover td{color:var(--text);background:rgba(255,255,255,.02)}
+.order-num{color:var(--accent);font-weight:600;font-size:.8rem}
+.status-pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:100px;font-size:.7rem;font-weight:600;letter-spacing:.04em}
+.status-delivered{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.status-progress{background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.2)}
+.stars{color:var(--yellow);font-size:.85rem}
+
+/* LEADERBOARD */
+.leader-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.leader-row:last-child{border-bottom:none}
+.leader-rank{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--text3);min-width:28px}
+.leader-rank.gold{color:#f59e0b}
+.leader-rank.silver{color:#94a3b8}
+.leader-rank.bronze{color:#b45309}
+.leader-name{flex:1;font-size:.88rem;font-weight:500;color:var(--text2)}
+.leader-name.you{color:var(--accent);font-weight:700}
+.leader-earn{font-size:.85rem;font-weight:600;color:var(--text)}
+
+/* NOTIF */
+.notif-item{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.notif-item:last-child{border-bottom:none}
+.notif-indicator{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.notif-indicator.unread{background:var(--accent)}
+.notif-indicator.read{background:rgba(255,255,255,.12)}
+.notif-body{flex:1}
+.notif-text{font-size:.84rem;color:var(--text2);margin-bottom:3px;line-height:1.45}
+.notif-time{font-size:.7rem;color:var(--text3)}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+
+/* EDIT PROFILE */
+.ep-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
+.ep-overlay.open{opacity:1;pointer-events:all}
+.ep-panel{position:fixed;top:0;right:0;width:380px;max-width:100vw;height:100vh;background:var(--bg2);border-left:1px solid var(--border);z-index:201;transform:translateX(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94);overflow-y:auto;padding:32px 28px}
+.ep-panel.open{transform:translateX(0)}
+.ep-panel::-webkit-scrollbar{width:3px}
+.ep-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+.ep-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.ep-title{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.05em}
+.ep-close{background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:none;transition:color .2s}
+.ep-close:hover{color:var(--text)}
+.ep-field{margin-bottom:18px}
+.ep-label{font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;display:block}
+.ep-input{width:100%;padding:12px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:11px;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:.87rem;outline:none;box-sizing:border-box;transition:border-color .2s,box-shadow .2s}
+.ep-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,255,.08)}
+.ep-input[readonly]{color:var(--text3);cursor:not-allowed}
+.ep-btn{width:100%;padding:15px;background:var(--accent);color:#000;border:none;border-radius:100px;font-family:'Instrument Sans',sans-serif;font-size:.95rem;font-weight:700;cursor:none;transition:all .2s;margin-top:8px}
+.ep-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,212,255,.35)}
+
+@media(max-width:1024px){
+  :root{--sidebar:64px}
+  .sb-logo-text{font-size:.1rem;opacity:0}
+  .sb-logo-sub,.nav-label,.sb-section,.sb-user-info,.sb-user-name,.sb-user-role{display:none}
+  .sb-logo{padding:16px 10px}
+  .nav-item{justify-content:center;padding:12px 0}
+  .sb-action{justify-content:center}
+  .sb-profile{justify-content:center}
+}
+@media(max-width:900px){
+  .delivery-content{grid-template-columns:1fr}
+  .delivery-actions{flex-direction:row;min-width:auto}
+}
+@media(max-width:640px){
+  :root{--sidebar:0px;--header:56px}
+  .sidebar{width:100%;height:64px;top:auto;bottom:0;flex-direction:row;border-right:none;border-top:1px solid var(--border)}
+  .sb-logo,.sb-section,.sb-user-info,.sb-profile,.sb-bottom,.sb-action,.logout-confirm{display:none!important}
+  .sb-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;overflow-y:hidden;align-items:center;justify-content:space-around}
+  .nav-item{flex-direction:column;gap:3px;padding:8px 10px;font-size:.6rem}
+  .nav-item .ico{font-size:1.3rem;min-width:auto}
+  .header{left:0}
+  .main{margin-left:0;margin-bottom:64px;height:calc(100vh - var(--header) - 64px);padding:20px 16px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .grid-2{grid-template-columns:1fr}
+  .ep-panel{width:100vw}
+}
+</style>
+</head>
+<body>
+<div class="cur" id="cur"></div>
+<div class="cur-r" id="curR"></div>
+
+<div class="ep-overlay" id="epOverlay" onclick="closeEditProfile()"></div>
+<div class="ep-panel" id="epPanel">
+  <div class="ep-header">
+    <span class="ep-title">Edit Profile</span>
+    <button class="ep-close" onclick="closeEditProfile()">✕</button>
+  </div>
+  <div class="ep-field"><label class="ep-label">Full Name</label><input class="ep-input" value="Khalid Al Rashidi" type="text"/></div>
+  <div class="ep-field"><label class="ep-label">Email Address</label><input class="ep-input" value="khalid.r@ku.ac.ae" type="email"/></div>
+  <div class="ep-field"><label class="ep-label">Student ID</label><input class="ep-input" value="100054219" readonly/></div>
+  <div class="ep-field"><label class="ep-label">Profile Photo</label>
+    <div style="border:1.5px dashed rgba(0,212,255,.25);border-radius:12px;padding:16px;text-align:center;cursor:none;background:rgba(0,212,255,.02)">
+      <div style="font-size:1.5rem">📷</div>
+      <p style="font-size:.78rem;color:var(--text3);margin-top:6px">Click or drag to upload a photo<br><span style="color:rgba(0,212,255,.5)">JPG, PNG up to 5MB</span></p>
+    </div>
+  </div>
+  <button class="ep-btn">Save Changes</button>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-text">CAMPUS<span style="color:var(--text)">RUNNER</span></div>
+      <div class="sb-logo-sub">Runner Portal</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">Main</div>
+      <a class="nav-item active" onclick="showPanel('home',this)" href="#"><span class="ico">🏠</span><span class="nav-label">Home</span></a>
+      <a class="nav-item" onclick="showPanel('deliveries',this)" href="#"><span class="ico">🏃</span><span class="nav-label">Deliveries</span></a>
+      <a class="nav-item" onclick="showPanel('earnings',this)" href="#"><span class="ico">💸</span><span class="nav-label">Earnings</span></a>
+      <div class="sb-section">Account</div>
+      <a class="nav-item" onclick="showPanel('reviews',this)" href="#"><span class="ico">⭐</span><span class="nav-label">Reviews</span></a>
+      <a class="nav-item" onclick="showPanel('notifications',this)" href="#"><span class="ico">🔔</span><span class="nav-label">Notifications</span></a>
+      <a class="nav-item" onclick="showPanel('settings',this)" href="#"><span class="ico">⚙️</span><span class="nav-label">Settings</span></a>
+    </nav>
+    <div class="sb-bottom">
+      <div class="sb-profile">
+        <div class="sb-avatar">KR</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Khalid Al Rashidi</div>
+          <div class="sb-user-role">Runner · KU Campus</div>
+        </div>
+      </div>
+      <button class="sb-action" onclick="openEditProfile()"><span class="ico">✏️</span><span class="nav-label">Edit Profile</span></button>
+      <button class="sb-action logout" onclick="toggleLogout()"><span class="ico">🚪</span><span class="nav-label">Log Out</span></button>
+      <div class="logout-confirm" id="logoutConfirm">
+        <p>Are you sure you want to log out?</p>
+        <div class="logout-confirm-btns">
+          <button class="btn-yes" onclick="window.location.href='/'">Yes</button>
+          <button class="btn-no" onclick="toggleLogout()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <header class="header">
+    <span class="header-title" id="headerTitle">Home</span>
+    <div class="header-right">
+      <button class="notif-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-dot"></span>
+      </button>
+      <div class="header-avatar">KR</div>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- HOME -->
+    <div class="panel active" id="panel-home">
+      <div class="welcome-banner">
+        <div class="welcome-row">
+          <div>
+            <div class="welcome-eyebrow">Welcome Back,</div>
+            <div class="welcome-name">Khalid Al Rashidi</div>
+            <div class="welcome-id">Runner ID: RUN-100054219</div>
+          </div>
+          <div class="welcome-right">
+            <div class="status-toggle-wrap">
+              <div class="toggle-row">
+                <span class="toggle-label" id="statusLabel">Available</span>
+                <label class="toggle-switch"><input type="checkbox" id="statusToggle" checked onchange="updateStatus()"/><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-status-text" id="statusText">You are currently <span>Available</span></div>
+            </div>
+            <div class="greeting" id="greeting"></div>
+            <div class="greeting-date" id="greetDate"></div>
+          </div>
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">💸</div>
+          <div class="stat-value">AED <span class="stat-accent" data-target="147">0</span></div>
+          <div class="stat-label">Today's Earnings</div>
+          <div class="stat-sub">Updated live</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏃</div>
+          <div class="stat-value stat-accent" data-target="6">0</div>
+          <div class="stat-label">Deliveries Today</div>
+          <div class="stat-sub">Completed today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value">AED <span class="stat-accent" data-target="2840">0</span></div>
+          <div class="stat-label">This Month</div>
+          <div class="stat-sub">Month to date</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-value stat-accent">4.8 <span style="font-size:1rem">★</span></div>
+          <div class="stat-label">Rating</div>
+          <div class="stat-sub">Based on 92 reviews</div>
+        </div>
+      </div>
+
+      <!-- ACTIVE DELIVERY -->
+      <div class="card accent-left">
+        <div class="card-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="card-title">Active Delivery</span>
+            <span class="eta-badge">⏱ ETA: 6 min</span>
+          </div>
+        </div>
+        <div class="delivery-content">
+          <div class="delivery-info">
+            <div class="delivery-row"><span class="delivery-ico">👤</span><span class="delivery-text">Customer: <strong>F.A.</strong> (Anonymised)</span></div>
+            <div class="delivery-row"><span class="delivery-ico">📍</span><span class="delivery-text">Pickup: <strong>Campus Slice Co. — Bldg. C, G/F</strong></span></div>
+            <div class="delivery-row"><span class="delivery-ico">🏁</span><span class="delivery-text">Drop-off: <strong>Engineering Block E, Room 214</strong></span></div>
+            <div class="delivery-row"><span class="delivery-ico">🛍️</span><span class="delivery-text">Items: <strong>Margherita Pizza × 1, Pepsi × 2</strong></span></div>
+            <div class="delivery-row"><span class="delivery-ico">💰</span><span class="delivery-text">Your earnings: <strong style="color:var(--accent)">AED 18</strong></span></div>
+          </div>
+          <div class="delivery-actions">
+            <button class="btn-ghost">Mark as Picked Up</button>
+            <button class="btn-cyan">Mark as Delivered</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHART + LEADERBOARD -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">This Week's Earnings</span></div>
+          <div class="chart-bars" id="earningsChart">
+            <div class="bar-wrap"><div class="bar" data-height="55" style="height:0"></div><div class="bar-day">Mon</div></div>
+            <div class="bar-wrap"><div class="bar" data-height="80" style="height:0"></div><div class="bar-day">Tue</div></div>
+            <div class="bar-wrap"><div class="bar" data-height="40" style="height:0"></div><div class="bar-day">Wed</div></div>
+            <div class="bar-wrap"><div class="bar" data-height="95" style="height:0"></div><div class="bar-day">Thu</div></div>
+            <div class="bar-wrap"><div class="bar today" data-height="72" style="height:0"></div><div class="bar-day" style="color:var(--accent)">Fri</div></div>
+            <div class="bar-wrap"><div class="bar" data-height="0" style="height:0"></div><div class="bar-day">Sat</div></div>
+            <div class="bar-wrap"><div class="bar" data-height="0" style="height:0"></div><div class="bar-day">Sun</div></div>
+          </div>
+          <div class="chart-mini">
+            <div class="mini-stat"><div class="mini-val">AED 842</div><div class="mini-label">Base Pay</div></div>
+            <div class="mini-stat"><div class="mini-val">AED 95</div><div class="mini-label">Bonuses</div></div>
+            <div class="mini-stat"><div class="mini-val">AED 47</div><div class="mini-label">Tips</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">Campus Leaderboard</span><span style="font-size:.75rem;color:var(--text3)">This week</span></div>
+          <div class="leader-row"><div class="leader-rank gold">1</div><div class="leader-name">Mohammed Al Kaabi</div><div class="leader-earn">AED 1,240</div></div>
+          <div class="leader-row"><div class="leader-rank silver">2</div><div class="leader-name">Sara Al Nuaimi</div><div class="leader-earn">AED 980</div></div>
+          <div class="leader-row"><div class="leader-rank bronze">3</div><div class="leader-name you">Khalid Al Rashidi 👈</div><div class="leader-earn" style="color:var(--accent)">AED 984</div></div>
+          <div class="leader-row"><div class="leader-rank" style="color:var(--text3)">4</div><div class="leader-name">Hamad Al Shamsi</div><div class="leader-earn">AED 810</div></div>
+          <div class="leader-row"><div class="leader-rank" style="color:var(--text3)">5</div><div class="leader-name">Noura Al Mazrouei</div><div class="leader-earn">AED 735</div></div>
+        </div>
+      </div>
+
+      <!-- RECENT DELIVERIES -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Recent Deliveries</span><a class="card-link" href="#">View All →</a></div>
+        <table class="order-table">
+          <thead><tr><th>Order #</th><th>Area</th><th>Items</th><th>Time</th><th>Earned</th><th>Rating</th></tr></thead>
+          <tbody>
+            <tr><td><span class="order-num">#CRU-4819</span></td><td>Eng. Block E</td><td>2 items</td><td style="color:var(--text3);font-size:.78rem">10:45</td><td style="color:var(--green);font-weight:600">AED 18</td><td><span class="stars">★★★★★</span></td></tr>
+            <tr><td><span class="order-num">#CRU-4809</span></td><td>Library</td><td>1 item</td><td style="color:var(--text3);font-size:.78rem">09:30</td><td style="color:var(--green);font-weight:600">AED 12</td><td><span class="stars">★★★★☆</span></td></tr>
+            <tr><td><span class="order-num">#CRU-4801</span></td><td>Admin Wing</td><td>3 items</td><td style="color:var(--text3);font-size:.78rem">Yesterday</td><td style="color:var(--green);font-weight:600">AED 24</td><td><span class="stars">★★★★★</span></td></tr>
+            <tr><td><span class="order-num">#CRU-4793</span></td><td>Campus Cafe</td><td>1 item</td><td style="color:var(--text3);font-size:.78rem">Yesterday</td><td style="color:var(--green);font-weight:600">AED 10</td><td><span class="stars">★★★★☆</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DELIVERIES PANEL -->
+    <div class="panel" id="panel-deliveries">
+      <div class="card" style="opacity:1;transform:none"><div class="card-header"><span class="card-title">All Deliveries</span></div>
+        <table class="order-table"><thead><tr><th>Order #</th><th>Area</th><th>Items</th><th>Date</th><th>Earned</th><th>Rating</th></tr></thead>
+        <tbody>
+          <tr><td><span class="order-num">#CRU-4819</span></td><td>Eng. Block E</td><td>2 items</td><td style="color:var(--text3);font-size:.78rem">Today</td><td style="color:var(--green);font-weight:600">AED 18</td><td><span class="stars">★★★★★</span></td></tr>
+          <tr><td><span class="order-num">#CRU-4809</span></td><td>Library</td><td>1 item</td><td style="color:var(--text3);font-size:.78rem">Today</td><td style="color:var(--green);font-weight:600">AED 12</td><td><span class="stars">★★★★☆</span></td></tr>
+          <tr><td><span class="order-num">#CRU-4801</span></td><td>Admin Wing</td><td>3 items</td><td style="color:var(--text3);font-size:.78rem">Yesterday</td><td style="color:var(--green);font-weight:600">AED 24</td><td><span class="stars">★★★★★</span></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <!-- EARNINGS PANEL -->
+    <div class="panel" id="panel-earnings">
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card" style="opacity:1;transform:none"><div class="stat-icon">💸</div><div class="stat-value stat-accent">AED 147</div><div class="stat-label">Today</div></div>
+        <div class="stat-card" style="opacity:1;transform:none"><div class="stat-icon">📅</div><div class="stat-value stat-accent">AED 984</div><div class="stat-label">This Week</div></div>
+        <div class="stat-card" style="opacity:1;transform:none"><div class="stat-icon">📈</div><div class="stat-value stat-accent">AED 2,840</div><div class="stat-label">This Month</div></div>
+      </div>
+      <div class="card" style="opacity:1;transform:none"><div class="card-header"><span class="card-title">Earnings Breakdown</span></div>
+        <div class="chart-mini">
+          <div class="mini-stat"><div class="mini-val">AED 842</div><div class="mini-label">Base Pay</div></div>
+          <div class="mini-stat"><div class="mini-val">AED 95</div><div class="mini-label">Bonuses</div></div>
+          <div class="mini-stat"><div class="mini-val">AED 47</div><div class="mini-label">Tips</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div class="panel" id="panel-reviews">
+      <div class="card" style="opacity:1;transform:none">
+        <div class="card-header"><span class="card-title">My Reviews</span><span style="font-family:'Bebas Neue';font-size:1.8rem;color:var(--accent)">4.8 ★</span></div>
+        <div class="notif-item"><div class="notif-indicator unread"></div><div class="notif-body"><div class="notif-text"><strong>F.A.</strong> — <span class="stars">★★★★★</span> "Super fast delivery! Khalid was very professional."</div><div class="notif-time">Today, 10:55</div></div></div>
+        <div class="notif-item"><div class="notif-indicator read"></div><div class="notif-body"><div class="notif-text"><strong>O.K.</strong> — <span class="stars">★★★★☆</span> "Great service, came on time. Will order again."</div><div class="notif-time">Yesterday</div></div></div>
+        <div class="notif-item"><div class="notif-indicator read"></div><div class="notif-body"><div class="notif-text"><strong>M.H.</strong> — <span class="stars">★★★★★</span> "Best runner on campus!"</div><div class="notif-time">Mon</div></div></div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="panel" id="panel-notifications">
+      <div class="card" style="opacity:1;transform:none"><div class="card-header"><span class="card-title">Notifications</span></div>
+        <div class="notif-item"><div class="notif-indicator unread"></div><div class="notif-body"><div class="notif-text">New delivery request nearby — <strong>#CRU-4822</strong>. Accept within 30s.</div><div class="notif-time">Just now</div></div></div>
+        <div class="notif-item"><div class="notif-indicator unread"></div><div class="notif-body"><div class="notif-text">🏆 You moved to <strong>#3 on the leaderboard</strong> this week!</div><div class="notif-time">1 hour ago</div></div></div>
+        <div class="notif-item"><div class="notif-indicator read"></div><div class="notif-body"><div class="notif-text">Bonus earned: <strong>AED 15</strong> for completing 6 deliveries today.</div><div class="notif-time">2 hours ago</div></div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-settings">
+      <div class="card" style="opacity:1;transform:none"><div class="card-header"><span class="card-title">Settings</span></div><p style="color:var(--text2)">Account settings coming soon.</p></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const cur=document.getElementById('cur'),curR=document.getElementById('curR');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+(function lerp(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;curR.style.left=rx+'px';curR.style.top=ry+'px';requestAnimationFrame(lerp)})();
+document.querySelectorAll('a,button,.nav-item,.stat-card').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.transform='translate(-50%,-50%) scale(2)';curR.style.transform='translate(-50%,-50%) scale(1.5)'});
+  el.addEventListener('mouseleave',()=>{cur.style.transform='translate(-50%,-50%) scale(1)';curR.style.transform='translate(-50%,-50%) scale(1)'});
+});
+function setGreeting(){
+  const h=new Date().getHours();
+  document.getElementById('greeting').textContent=h<12?'Good morning ☀️':h<17?'Good afternoon 🌤':'Good evening 🌙';
+  document.getElementById('greetDate').textContent=new Date().toLocaleDateString('en-AE',{weekday:'long',day:'numeric',month:'long'});
+}
+setGreeting();
+function showPanel(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  const t={home:'Home',deliveries:'Deliveries',earnings:'Earnings',reviews:'Reviews',notifications:'Notifications',settings:'Settings'};
+  document.getElementById('headerTitle').textContent=t[id]||id;
+}
+function updateStatus(){
+  const on=document.getElementById('statusToggle').checked;
+  document.getElementById('statusLabel').textContent=on?'Available':'Offline';
+  document.getElementById('statusText').innerHTML='You are currently <span style="color:'+(on?'var(--accent)':'var(--text3)')+'">'+( on?'Available':'Offline')+'</span>';
+}
+function toggleLogout(){document.getElementById('logoutConfirm').classList.toggle('show')}
+function openEditProfile(){document.getElementById('epOverlay').classList.add('open');document.getElementById('epPanel').classList.add('open')}
+function closeEditProfile(){document.getElementById('epOverlay').classList.remove('open');document.getElementById('epPanel').classList.remove('open')}
+function countUp(el,target,dur=800){
+  const start=Date.now();
+  (function tick(){const e=Date.now()-start,p=Math.min(e/dur,1),ease=1-Math.pow(1-p,3);el.textContent=Math.floor(ease*target).toLocaleString();if(p<1)requestAnimationFrame(tick);else el.textContent=target.toLocaleString()})();
+}
+function animateChart(){
+  document.querySelectorAll('#earningsChart .bar').forEach(b=>{
+    const h=b.dataset.height;
+    setTimeout(()=>{b.style.height=h+'%'},300);
+  });
+}
+window.addEventListener('load',()=>{
+  document.querySelectorAll('.stat-card,.card').forEach((c,i)=>setTimeout(()=>c.classList.add('visible'),i*80));
+  document.querySelectorAll('[data-target]').forEach(el=>setTimeout(()=>countUp(el,parseInt(el.dataset.target)),200));
+  setTimeout(animateChart,400);
+});
+</script>
+</body>
+</html>
